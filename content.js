@@ -37,7 +37,7 @@ function extractJiraData() {
 
   const title = titleEl.innerText.trim();
   const key = keyEl.innerText.trim();
-
+  
   // Jira uses different elements for status depending on version/theme
   const statusValEl = document.querySelector(CONFIG.selectors.statusId);
   const dataIssueStatusEl = document.querySelector(CONFIG.selectors.statusAttr);
@@ -93,17 +93,17 @@ function mapJiraDataToSheet(rawStatus, rawType) {
  */
 function getMountPoint() {
   let opsbarUl = null;
-
+  
   // 1. Try to find the status transition button directly (works perfectly in List Layout)
   const transitionsBtn = document.querySelector(CONFIG.selectors.transitionsBtn);
   if (transitionsBtn) {
     opsbarUl = transitionsBtn.closest('ul');
   }
-
+  
   // 2. Fallback to standard Issue View mount points
   if (!opsbarUl) {
-    const mountPoint = document.querySelector(CONFIG.selectors.transitionsOpsbar)
-      || document.querySelector(CONFIG.selectors.operationsOpsbar);
+    const mountPoint = document.querySelector(CONFIG.selectors.transitionsOpsbar) 
+                    || document.querySelector(CONFIG.selectors.operationsOpsbar);
     if (mountPoint) {
       opsbarUl = mountPoint.parentNode;
     }
@@ -138,7 +138,16 @@ function injectButton() {
 
   const iconSpan = document.createElement('span');
   iconSpan.className = 'animated-cat';
-  iconSpan.innerText = '🐱';
+  iconSpan.style.display = 'inline-flex';
+  iconSpan.style.alignItems = 'center';
+  iconSpan.innerHTML = `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 16.97 21 12 21s-9-3.1-9-7.56c0-1.25.43-2.4 1-3.44 0 0-1.89-6.42-.5-7 1.39-.58 4.72.23 6.5 2.23A9.04 9.04 0 0 1 12 5Z"/>
+      <path d="M8 14v.5"/>
+      <path d="M16 14v.5"/>
+      <path d="M11.25 16.25h1.5L12 17l-.75-.75Z"/>
+    </svg>
+  `;
 
   const span = document.createElement('span');
   span.className = 'trigger-label';
@@ -201,38 +210,64 @@ function handleBackgroundResponse(response, buttonElement, labelElement) {
     labelElement.innerText = 'Added!';
     buttonElement.style.background = 'linear-gradient(135deg, #36B37E 0%, #00875A 100%)';
 
-    chrome.storage.local.get({ showSuccessAnimation: true }, function (items) {
+    chrome.storage.local.get({ showSuccessAnimation: true }, function(items) {
       if (items.showSuccessAnimation) {
-        showMemePopup();
+        const parrotContainer = document.createElement('div');
+        parrotContainer.style.position = 'fixed';
+        parrotContainer.style.top = '0';
+        parrotContainer.style.left = '0';
+        parrotContainer.style.width = '100vw';
+        parrotContainer.style.height = '100vh';
+        parrotContainer.style.display = 'flex';
+        parrotContainer.style.flexDirection = 'column';
+        parrotContainer.style.justifyContent = 'center';
+        parrotContainer.style.alignItems = 'center';
+        parrotContainer.style.zIndex = '999999';
+        parrotContainer.style.pointerEvents = 'none';
+        parrotContainer.style.opacity = '0';
+        parrotContainer.style.transform = 'scale(0.5)';
+        parrotContainer.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
 
-        if (typeof confetti === 'function') {
-          var duration = 3 * 1000;
-          var animationEnd = Date.now() + duration;
-          var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+        const parrot = document.createElement('img');
+        parrot.src = chrome.runtime.getURL('jkw-bck.png');
+        parrot.style.width = '50vmin'; // Giant image relative to screen size
+        parrotContainer.appendChild(parrot);
+        
+        const memeText = document.createElement('div');
+        memeText.innerText = 'SIP';
+        memeText.style.fontFamily = 'Impact, "Arial Black", sans-serif';
+        memeText.style.fontSize = '120px';
+        memeText.style.color = 'white';
+        memeText.style.textTransform = 'uppercase';
+        // Classic meme outline using text-shadow
+        memeText.style.textShadow = '3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 0 6px 0 #000, 6px 6px 10px rgba(0,0,0,0.5)'; 
+        memeText.style.marginTop = '20px';
+        memeText.style.letterSpacing = '5px';
+        parrotContainer.appendChild(memeText);
+        
+        document.body.appendChild(parrotContainer);
 
-          function randomInRange(min, max) {
-            return Math.random() * (max - min) + min;
-          }
+        // Play audio
+        const audio = new Audio(chrome.runtime.getURL('hidup-jokowi.mp3'));
 
-          var interval = setInterval(function () {
-            var timeLeft = animationEnd - Date.now();
+        // Pop up and bounce into screen
+        setTimeout(() => {
+          parrotContainer.style.opacity = '1';
+          parrotContainer.style.transform = 'scale(1)';
+          audio.play().catch(e => console.log('Audio playback blocked by browser', e));
+        }, 50);
 
-            if (timeLeft <= 0) {
-              return clearInterval(interval);
-            }
-
-            var particleCount = 50 * (timeLeft / duration);
-            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-          }, 250);
-        }
+        // Shrink and cleanup
+        setTimeout(() => {
+          parrotContainer.style.opacity = '0';
+          parrotContainer.style.transform = 'scale(0.5)';
+          setTimeout(() => parrotContainer.remove(), 500);
+        }, 1500);
       }
     });
 
-    setTimeout(() => {
-      labelElement.innerText = 'Add to Task Tracker';
-      buttonElement.style.background = '';
-    }, 3000);
+    // Make the button unclickable and permanently "Done"
+    buttonElement.style.pointerEvents = 'none';
   } else {
     labelElement.innerText = 'Error';
     alert(`Failed to add task: ${response ? response.error : 'Unknown error'}`);
@@ -269,7 +304,7 @@ function showDatePickerModal(onSubmit) {
     const dateInput = document.createElement('input');
     dateInput.type = 'date';
     dateInput.id = 'task-tracker-due-date';
-
+    
     // Default to +3 days
     const defaultDate = new Date(Date.now() + CONFIG.defaultDueDays * 24 * 60 * 60 * 1000);
     dateInput.value = defaultDate.toISOString().split('T')[0];
@@ -306,71 +341,6 @@ function showDatePickerModal(onSubmit) {
   }
 
   overlay.classList.add('active');
-}
-
-// ==========================================
-// MEME POPUP UI
-// ==========================================
-
-/**
- * Shows a sarcastic Indonesian meme popup
- */
-function showMemePopup() {
-  const sarcasticMemes = [
-    { text: "SELAMAT!\nANDA SEMAKIN MEMBUAT BOS ANDA KAYA", emoji: "🤑" },
-    { text: "KERJA KERAS BAGAI QUDA\nGAJI TETAP SEADANYA", emoji: "🐴" },
-    { text: "MANTAP!\nCICILAN PAJERO BOS MAKIN LANCAR", emoji: "🚙" },
-    { text: "KERJA CERDAS, KERJA IKHLAS\nBOS YANG BELI MERCY", emoji: "💸" },
-    { text: "BOS MENGUCAPKAN:\nTERIMA KASIH ATAS PENGABDIANMU", emoji: "🤝" }
-  ];
-
-  const meme = sarcasticMemes[Math.floor(Math.random() * sarcasticMemes.length)];
-
-  const overlay = document.createElement('div');
-  overlay.style.position = 'fixed';
-  overlay.style.top = '0';
-  overlay.style.left = '0';
-  overlay.style.width = '100vw';
-  overlay.style.height = '100vh';
-  overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
-  overlay.style.zIndex = '10000';
-  overlay.style.display = 'flex';
-  overlay.style.justifyContent = 'center';
-  overlay.style.alignItems = 'center';
-  overlay.style.flexDirection = 'column';
-  overlay.style.opacity = '0';
-  overlay.style.transition = 'opacity 0.3s ease';
-
-  const emojiEl = document.createElement('div');
-  emojiEl.innerText = meme.emoji;
-  emojiEl.style.fontSize = '120px';
-  emojiEl.style.marginBottom = '20px';
-  emojiEl.style.filter = 'drop-shadow(0 0 20px rgba(255,255,255,0.3))';
-
-  const textEl = document.createElement('div');
-  textEl.innerText = meme.text;
-  textEl.style.fontFamily = 'Impact, sans-serif';
-  textEl.style.fontSize = '54px';
-  textEl.style.color = 'white';
-  textEl.style.textAlign = 'center';
-  textEl.style.textTransform = 'uppercase';
-  textEl.style.lineHeight = '1.2';
-  textEl.style.textShadow = '3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 0 4px 15px rgba(0,0,0,0.8)';
-
-  overlay.appendChild(emojiEl);
-  overlay.appendChild(textEl);
-  document.body.appendChild(overlay);
-
-  // Trigger animation
-  setTimeout(() => {
-    overlay.style.opacity = '1';
-  }, 10);
-
-  // Remove after 3.5 seconds
-  setTimeout(() => {
-    overlay.style.opacity = '0';
-    setTimeout(() => overlay.remove(), 300);
-  }, 3500);
 }
 
 // ==========================================

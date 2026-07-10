@@ -60,14 +60,19 @@ function getJwt(credentials) {
 async function getAccessToken(credentials) {
   const jwt = getJwt(credentials);
   
-  const response = await fetch(credentials.token_uri, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt
-    })
-  });
+  let response;
+  try {
+    response = await fetch(credentials.token_uri, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion: jwt
+      }).toString()
+    });
+  } catch (e) {
+    throw new Error(`fetch() failed in getAccessToken (URL: ${credentials.token_uri}): ${e.message}`);
+  }
   
   const data = await response.json();
   if (data.error) {
@@ -89,11 +94,19 @@ async function getAccessToken(credentials) {
  */
 async function fetchSheetTitle(token, spreadsheetId, sheetId) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets(properties(sheetId,title))`;
-  const response = await fetch(url, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  } catch (e) {
+    throw new Error(`fetch() failed in fetchSheetTitle: ${e.message}`);
+  }
   
-  if (!response.ok) throw new Error("Failed to fetch spreadsheet metadata");
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Failed to fetch spreadsheet metadata: ${response.status} ${response.statusText} - ${errText}`);
+  }
   
   const data = await response.json();
   const sheet = data.sheets.find(s => s.properties.sheetId === sheetId);
@@ -115,12 +128,22 @@ async function findExistingTaskRow(token, spreadsheetId, sheetTitle, taskDetail)
   const taskKey = match ? match[1] : null;
   if (!taskKey) return -1;
 
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/'${sheetTitle}'!D:D`;
-  const response = await fetch(url, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const encodedRange = encodeURIComponent(`'${sheetTitle}'!D:D`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodedRange}`;
   
-  if (!response.ok) throw new Error("Failed to fetch existing tasks");
+  let response;
+  try {
+    response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  } catch (e) {
+    throw new Error(`fetch() failed in findExistingTaskRow: ${e.message}`);
+  }
+  
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Failed to fetch existing tasks: ${response.status} ${response.statusText} - ${errText}`);
+  }
   
   const data = await response.json();
   const rows = data.values || [];
@@ -138,22 +161,27 @@ async function findExistingTaskRow(token, spreadsheetId, sheetTitle, taskDetail)
  */
 async function updateExistingTask(token, spreadsheetId, sheetTitle, rowNum, payload) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`;
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      valueInputOption: "USER_ENTERED",
-      data: [
-        { range: `'${sheetTitle}'!A${rowNum}`, values: [[payload.status]] },
-        { range: `'${sheetTitle}'!D${rowNum}`, values: [[payload.taskDetail]] },
-        { range: `'${sheetTitle}'!F${rowNum}`, values: [[payload.cat]] },
-        { range: `'${sheetTitle}'!G${rowNum}`, values: [[payload.due]] }
-      ]
-    })
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        valueInputOption: "USER_ENTERED",
+        data: [
+          { range: `'${sheetTitle}'!A${rowNum}`, values: [[payload.status]] },
+          { range: `'${sheetTitle}'!D${rowNum}`, values: [[payload.taskDetail]] },
+          { range: `'${sheetTitle}'!F${rowNum}`, values: [[payload.cat]] },
+          { range: `'${sheetTitle}'!G${rowNum}`, values: [[payload.due]] }
+        ]
+      })
+    });
+  } catch (e) {
+    throw new Error(`fetch() failed in updateExistingTask: ${e.message}`);
+  }
   
   if (!response.ok) {
     const err = await response.text();
@@ -193,14 +221,19 @@ async function insertNewTask(token, spreadsheetId, sheetId, payload) {
   ];
 
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`;
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ requests })
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ requests })
+    });
+  } catch (e) {
+    throw new Error(`fetch() failed in insertNewTask: ${e.message}`);
+  }
 
   if (!response.ok) {
     const err = await response.text();

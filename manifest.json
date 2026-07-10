@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Jira Task Tracker",
+  "name": "Males Ngisi Task Tracker Makanya Bikin Extension",
   "version": "1.0",
   "description": "Adds a button to Jira issues to send them to Google Sheets Task Tracker.",
   "permissions": [
@@ -17,11 +17,24 @@
     "service_worker": "background.js"
   },
   "options_page": "options.html",
+  "web_accessible_resources": [
+    {
+      "resources": ["jkw-bck.png", "hidup-jokowi.mp3"],
+      "matches": ["https://intracks.danamon.co.id/*"]
+    }
+  ],
   "content_scripts": [
     {
-      "matches": ["https://intracks.danamon.co.id/*"],
-      "css": ["styles.css"],
-      "js": ["confetti.browser.js", "content.js"],
+      "matches": [
+        "https://intracks.danamon.co.id/*"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "js": [
+        "confetti.browser.js",
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ]
