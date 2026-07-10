@@ -1,16 +1,6 @@
 # Males Ngisi Task Tracker Makanya Bikin Extension Buat Jira
 
-A lightweight, serverless Chrome extension that automatically injects an "Add to Task Tracker" button directly into your Jira issues. Clicking the button sends the task details, status, and due date directly to a Google Sheet.
-
-## Features
-- **Seamless Jira Integration**: Works on both the Standard Issue View and the List (Navigator) Layout.
-- **Smart Deduplication**: Automatically finds existing tasks and updates them in-place instead of creating duplicates.
-- **Serverless**: Connects directly to Google Sheets API using a Service Account JSON.
-- **Zero Dependencies**: Built with 100% Vanilla JS for speed and simplicity.
-
----
-
-## Setup Tutorial
+Intinya aja
 
 ### Step 0: Clone the Repository
 Open your terminal and clone the repository to your local machine:
