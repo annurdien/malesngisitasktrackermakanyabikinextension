@@ -210,8 +210,8 @@ function handleBackgroundResponse(response, buttonElement, labelElement) {
     labelElement.innerText = 'Added!';
     buttonElement.style.background = 'linear-gradient(135deg, #36B37E 0%, #00875A 100%)';
 
-    chrome.storage.local.get({ showSuccessAnimation: true }, function(items) {
-      if (items.showSuccessAnimation) {
+    chrome.storage.local.get({ successAnimationType: 'image' }, function(items) {
+      if (items.successAnimationType === 'image') {
         const parrotContainer = document.createElement('div');
         parrotContainer.style.position = 'fixed';
         parrotContainer.style.top = '0';
@@ -239,7 +239,6 @@ function handleBackgroundResponse(response, buttonElement, labelElement) {
         memeText.style.fontSize = '120px';
         memeText.style.color = 'white';
         memeText.style.textTransform = 'uppercase';
-        // Classic meme outline using text-shadow
         memeText.style.textShadow = '3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 0 6px 0 #000, 6px 6px 10px rgba(0,0,0,0.5)'; 
         memeText.style.marginTop = '20px';
         memeText.style.letterSpacing = '5px';
@@ -247,22 +246,30 @@ function handleBackgroundResponse(response, buttonElement, labelElement) {
         
         document.body.appendChild(parrotContainer);
 
-        // Play audio
         const audio = new Audio(chrome.runtime.getURL('hidup-jokowi.mp3'));
 
-        // Pop up and bounce into screen
         setTimeout(() => {
           parrotContainer.style.opacity = '1';
           parrotContainer.style.transform = 'scale(1)';
           audio.play().catch(e => console.log('Audio playback blocked by browser', e));
         }, 50);
 
-        // Shrink and cleanup
         setTimeout(() => {
           parrotContainer.style.opacity = '0';
           parrotContainer.style.transform = 'scale(0.5)';
           setTimeout(() => parrotContainer.remove(), 500);
         }, 1500);
+      } else if (items.successAnimationType === 'confetti' && typeof confetti === 'function') {
+        // Fast, intense burst from the middle
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          startVelocity: 60,
+          origin: { x: 0.5, y: 0.5 }, // Center of screen
+          zIndex: 999999,
+          gravity: 1.2,
+          scalar: 1.2
+        });
       }
     });
 

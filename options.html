@@ -35,10 +35,12 @@
   
   <p><strong>Preferences</strong></p>
   <div style="margin-bottom: 25px;">
-    <label style="display:flex; align-items:center; cursor:pointer;">
-      <input type="checkbox" id="showSuccessAnimation" checked style="margin-right: 8px;">
-      Show Success Animation
-    </label>
+    <label for="successAnimationType" style="display:block; margin-bottom: 5px;">Success Animation Type:</label>
+    <select id="successAnimationType" style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 3px;">
+      <option value="image">Meme Image</option>
+      <option value="confetti">Fireworks Confetti</option>
+      <option value="none">Disabled</option>
+    </select>
   </div>
 
   <button id="save">Save Settings</button>

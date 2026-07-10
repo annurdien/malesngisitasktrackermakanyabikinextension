@@ -3,7 +3,7 @@ function save_options() {
   const credentialsText = document.getElementById('credentials').value;
   const spreadsheetId = document.getElementById('spreadsheetId').value.trim();
   const sheetId = document.getElementById('sheetId').value.trim();
-  const showSuccessAnimation = document.getElementById('showSuccessAnimation').checked;
+  const successAnimationType = document.getElementById('successAnimationType').value;
 
   try {
     const credentials = credentialsText ? JSON.parse(credentialsText) : null;
@@ -11,7 +11,7 @@ function save_options() {
       serviceAccountCredentials: credentials,
       spreadsheetId: spreadsheetId,
       sheetId: sheetId,
-      showSuccessAnimation: showSuccessAnimation
+      successAnimationType: successAnimationType
     }, function() {
       // Update status to let user know options were saved.
       const status = document.getElementById('status');
@@ -37,14 +37,14 @@ function restore_options() {
     serviceAccountCredentials: null,
     spreadsheetId: '',
     sheetId: '',
-    showSuccessAnimation: true
+    successAnimationType: 'image'
   }, function(items) {
     if (items.serviceAccountCredentials) {
       document.getElementById('credentials').value = JSON.stringify(items.serviceAccountCredentials, null, 2);
     }
     document.getElementById('spreadsheetId').value = items.spreadsheetId;
     document.getElementById('sheetId').value = items.sheetId;
-    document.getElementById('showSuccessAnimation').checked = items.showSuccessAnimation;
+    document.getElementById('successAnimationType').value = items.successAnimationType;
   });
 }
 // Auto-extract IDs from Spreadsheet URL
