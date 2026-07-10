@@ -12,6 +12,14 @@ A lightweight, serverless Chrome extension that automatically injects an "Add to
 
 ## Setup Tutorial
 
+### Step 0: Clone the Repository
+Open your terminal and clone the repository to your local machine:
+```bash
+git clone https://github.com/annurdien/malesngisitasktrackermakanyabikinextension.git
+cd malesngisitasktrackermakanyabikinextension
+```
+*(If you downloaded the ZIP file instead, just extract it and open the folder).*
+
 To get the extension working, you need to connect it to a Google Cloud Service Account so it has permission to edit your Google Sheet.
 
 ### Step 1: Create a Google Cloud Project & Enable the API
