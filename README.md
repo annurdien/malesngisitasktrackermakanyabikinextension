@@ -1,17 +1,5 @@
 # Males Ngisi Task Tracker Makanya Bikin Extension Buat Jira
 
-Extension Chrome super ringan tanpa server yang otomatis nambahin tombol "Add to Task Tracker" langsung di Jira. Tinggal klik, detail task, status, sama due date bakal otomatis masuk ke Google Sheet lo.
-
-## Fitur Keren
-- **Nyatu sama Jira**: Jalan lancar di tampilan issue biasa maupun tampilan list (navigator).
-- **Anti Dobel**: Bakal otomatis nyari task yang udah ada dan update datanya, jadi gak bakal ada duplikat di Sheet.
-- **Serverless**: Langsung nyambung ke Google Sheets API pake Service Account JSON.
-- **Gak Pake Ribet**: Dibikin 100% pake Vanilla JS biar kenceng dan simpel.
-
----
-
-## Tutorial Setup
-
 Biar extension ini jalan, lo harus nyambungin ke Google Cloud Service Account supaya dia punya akses buat ngedit Google Sheet lo.
 
 ### Step 0: Clone Repository-nya
