@@ -5,7 +5,7 @@ Biar extension ini jalan, lo harus nyambungin ke Google Cloud Service Account su
 ### Step 0: Clone Repository-nya
 Buka terminal dan clone repo ini ke laptop lo:
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/annurdien/malesngisitasktrackermakanyabikinextension.git
 cd malesngisitasktrackermakanyabikinextension
 ```
 *(Kalo lo download file ZIP, tinggal di-extract aja trus buka foldernya).*
