@@ -3,13 +3,15 @@ function save_options() {
   const credentialsText = document.getElementById('credentials').value;
   const spreadsheetId = document.getElementById('spreadsheetId').value.trim();
   const sheetId = document.getElementById('sheetId').value.trim();
+  const showSuccessAnimation = document.getElementById('showSuccessAnimation').checked;
 
   try {
     const credentials = credentialsText ? JSON.parse(credentialsText) : null;
     chrome.storage.local.set({
       serviceAccountCredentials: credentials,
       spreadsheetId: spreadsheetId,
-      sheetId: sheetId
+      sheetId: sheetId,
+      showSuccessAnimation: showSuccessAnimation
     }, function() {
       // Update status to let user know options were saved.
       const status = document.getElementById('status');
@@ -34,13 +36,15 @@ function restore_options() {
   chrome.storage.local.get({
     serviceAccountCredentials: null,
     spreadsheetId: '',
-    sheetId: ''
+    sheetId: '',
+    showSuccessAnimation: true
   }, function(items) {
     if (items.serviceAccountCredentials) {
       document.getElementById('credentials').value = JSON.stringify(items.serviceAccountCredentials, null, 2);
     }
     document.getElementById('spreadsheetId').value = items.spreadsheetId;
     document.getElementById('sheetId').value = items.sheetId;
+    document.getElementById('showSuccessAnimation').checked = items.showSuccessAnimation;
   });
 }
 // Auto-extract IDs from Spreadsheet URL

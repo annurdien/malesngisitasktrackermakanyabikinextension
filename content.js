@@ -37,7 +37,7 @@ function extractJiraData() {
 
   const title = titleEl.innerText.trim();
   const key = keyEl.innerText.trim();
-  
+
   // Jira uses different elements for status depending on version/theme
   const statusValEl = document.querySelector(CONFIG.selectors.statusId);
   const dataIssueStatusEl = document.querySelector(CONFIG.selectors.statusAttr);
@@ -93,17 +93,17 @@ function mapJiraDataToSheet(rawStatus, rawType) {
  */
 function getMountPoint() {
   let opsbarUl = null;
-  
+
   // 1. Try to find the status transition button directly (works perfectly in List Layout)
   const transitionsBtn = document.querySelector(CONFIG.selectors.transitionsBtn);
   if (transitionsBtn) {
     opsbarUl = transitionsBtn.closest('ul');
   }
-  
+
   // 2. Fallback to standard Issue View mount points
   if (!opsbarUl) {
-    const mountPoint = document.querySelector(CONFIG.selectors.transitionsOpsbar) 
-                    || document.querySelector(CONFIG.selectors.operationsOpsbar);
+    const mountPoint = document.querySelector(CONFIG.selectors.transitionsOpsbar)
+      || document.querySelector(CONFIG.selectors.operationsOpsbar);
     if (mountPoint) {
       opsbarUl = mountPoint.parentNode;
     }
@@ -201,9 +201,33 @@ function handleBackgroundResponse(response, buttonElement, labelElement) {
     labelElement.innerText = 'Added!';
     buttonElement.style.background = 'linear-gradient(135deg, #36B37E 0%, #00875A 100%)';
 
-    if (typeof confetti === 'function') {
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, zIndex: 9999 });
-    }
+    chrome.storage.local.get({ showSuccessAnimation: true }, function (items) {
+      if (items.showSuccessAnimation) {
+        showMemePopup();
+
+        if (typeof confetti === 'function') {
+          var duration = 3 * 1000;
+          var animationEnd = Date.now() + duration;
+          var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+          function randomInRange(min, max) {
+            return Math.random() * (max - min) + min;
+          }
+
+          var interval = setInterval(function () {
+            var timeLeft = animationEnd - Date.now();
+
+            if (timeLeft <= 0) {
+              return clearInterval(interval);
+            }
+
+            var particleCount = 50 * (timeLeft / duration);
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+          }, 250);
+        }
+      }
+    });
 
     setTimeout(() => {
       labelElement.innerText = 'Add to Task Tracker';
@@ -245,7 +269,7 @@ function showDatePickerModal(onSubmit) {
     const dateInput = document.createElement('input');
     dateInput.type = 'date';
     dateInput.id = 'task-tracker-due-date';
-    
+
     // Default to +3 days
     const defaultDate = new Date(Date.now() + CONFIG.defaultDueDays * 24 * 60 * 60 * 1000);
     dateInput.value = defaultDate.toISOString().split('T')[0];
@@ -282,6 +306,71 @@ function showDatePickerModal(onSubmit) {
   }
 
   overlay.classList.add('active');
+}
+
+// ==========================================
+// MEME POPUP UI
+// ==========================================
+
+/**
+ * Shows a sarcastic Indonesian meme popup
+ */
+function showMemePopup() {
+  const sarcasticMemes = [
+    { text: "SELAMAT!\nANDA SEMAKIN MEMBUAT BOS ANDA KAYA", emoji: "🤑" },
+    { text: "KERJA KERAS BAGAI QUDA\nGAJI TETAP SEADANYA", emoji: "🐴" },
+    { text: "MANTAP!\nCICILAN PAJERO BOS MAKIN LANCAR", emoji: "🚙" },
+    { text: "KERJA CERDAS, KERJA IKHLAS\nBOS YANG BELI MERCY", emoji: "💸" },
+    { text: "BOS MENGUCAPKAN:\nTERIMA KASIH ATAS PENGABDIANMU", emoji: "🤝" }
+  ];
+
+  const meme = sarcasticMemes[Math.floor(Math.random() * sarcasticMemes.length)];
+
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100vw';
+  overlay.style.height = '100vh';
+  overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
+  overlay.style.zIndex = '10000';
+  overlay.style.display = 'flex';
+  overlay.style.justifyContent = 'center';
+  overlay.style.alignItems = 'center';
+  overlay.style.flexDirection = 'column';
+  overlay.style.opacity = '0';
+  overlay.style.transition = 'opacity 0.3s ease';
+
+  const emojiEl = document.createElement('div');
+  emojiEl.innerText = meme.emoji;
+  emojiEl.style.fontSize = '120px';
+  emojiEl.style.marginBottom = '20px';
+  emojiEl.style.filter = 'drop-shadow(0 0 20px rgba(255,255,255,0.3))';
+
+  const textEl = document.createElement('div');
+  textEl.innerText = meme.text;
+  textEl.style.fontFamily = 'Impact, sans-serif';
+  textEl.style.fontSize = '54px';
+  textEl.style.color = 'white';
+  textEl.style.textAlign = 'center';
+  textEl.style.textTransform = 'uppercase';
+  textEl.style.lineHeight = '1.2';
+  textEl.style.textShadow = '3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 0 4px 15px rgba(0,0,0,0.8)';
+
+  overlay.appendChild(emojiEl);
+  overlay.appendChild(textEl);
+  document.body.appendChild(overlay);
+
+  // Trigger animation
+  setTimeout(() => {
+    overlay.style.opacity = '1';
+  }, 10);
+
+  // Remove after 3.5 seconds
+  setTimeout(() => {
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.remove(), 300);
+  }, 3500);
 }
 
 // ==========================================

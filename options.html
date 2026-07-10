@@ -32,7 +32,16 @@
   <p><strong>Service Account Credentials</strong></p>
   <p style="font-size: 13px; color: #555; margin-top: -10px;">Paste the contents of your Google Service Account <code>credentials.json</code> below:</p>
   <textarea id="credentials" placeholder='{\n  "type": "service_account",\n  "project_id": "...",\n  "private_key_id": "...",\n  "private_key": "-----BEGIN PRIVATE KEY-----\\n...",\n  "client_email": "...",\n  "client_id": "...",\n  "auth_uri": "https://accounts.google.com/o/oauth2/auth",\n  "token_uri": "https://oauth2.googleapis.com/token",\n  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",\n  "client_x509_cert_url": "..."\n}'></textarea>
-  <button id="save">Save Credentials</button>
+  
+  <p><strong>Preferences</strong></p>
+  <div style="margin-bottom: 25px;">
+    <label style="display:flex; align-items:center; cursor:pointer;">
+      <input type="checkbox" id="showSuccessAnimation" checked style="margin-right: 8px;">
+      Show Success Animation
+    </label>
+  </div>
+
+  <button id="save">Save Settings</button>
   <div id="status"></div>
   <script src="options.js"></script>
 </body>
