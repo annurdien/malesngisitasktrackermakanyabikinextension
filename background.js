@@ -128,7 +128,7 @@ async function findExistingTaskRow(token, spreadsheetId, sheetTitle, taskDetail)
   const taskKey = match ? match[1] : null;
   if (!taskKey) return -1;
 
-  const encodedRange = encodeURIComponent(`'${sheetTitle}'!D:D`);
+  const encodedRange = encodeURIComponent(`'${sheetTitle}'!E:E`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodedRange}`;
   
   let response;
@@ -172,10 +172,10 @@ async function updateExistingTask(token, spreadsheetId, sheetTitle, rowNum, payl
       body: JSON.stringify({
         valueInputOption: "USER_ENTERED",
         data: [
-          { range: `'${sheetTitle}'!A${rowNum}`, values: [[payload.status]] },
-          { range: `'${sheetTitle}'!D${rowNum}`, values: [[payload.taskDetail]] },
-          { range: `'${sheetTitle}'!F${rowNum}`, values: [[payload.cat]] },
-          { range: `'${sheetTitle}'!G${rowNum}`, values: [[payload.due]] }
+          { range: `'${sheetTitle}'!B${rowNum}`, values: [[payload.status]] },
+          { range: `'${sheetTitle}'!E${rowNum}`, values: [[payload.taskDetail]] },
+          { range: `'${sheetTitle}'!G${rowNum}`, values: [[payload.cat]] },
+          { range: `'${sheetTitle}'!H${rowNum}`, values: [[payload.due]] }
         ]
       })
     });
@@ -210,7 +210,7 @@ async function insertNewTask(token, spreadsheetId, sheetId, payload) {
         range: {
           sheetId: sheetId, 
           startRowIndex: CONFIG.insertRowIndex, endRowIndex: CONFIG.insertRowIndex + 1,
-          startColumnIndex: 0, endColumnIndex: rowData.length
+          startColumnIndex: 1, endColumnIndex: rowData.length + 1
         },
         rows: [{
           values: rowData.map(val => val !== "" ? { userEnteredValue: { stringValue: String(val) } } : {})
