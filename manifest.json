@@ -16,6 +16,9 @@
   "background": {
     "service_worker": "background.js"
   },
+  "action": {
+    "default_title": "Open Settings"
+  },
   "options_page": "options.html",
   "web_accessible_resources": [
     {

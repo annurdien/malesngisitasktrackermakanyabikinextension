@@ -291,6 +291,11 @@ async function processTaskUpload(accessToken, taskDetail, spreadsheetId, sheetId
 // EXTENSION EVENT LISTENERS
 // ==========================================
 
+// Open options page when the extension icon is clicked
+chrome.action.onClicked.addListener(() => {
+  chrome.runtime.openOptionsPage();
+});
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "addTask") {
     chrome.storage.local.get(['serviceAccountCredentials', 'spreadsheetId', 'sheetId', 'startColumn'], async (result) => {
