@@ -1,0 +1,151 @@
+#add-task-tracker-btn {
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #0052CC 0%, #36B37E 100%);
+    color: white;
+    border: none;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#add-task-tracker-btn:hover {
+    background: linear-gradient(135deg, #0747A6 0%, #00875A 100%);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+    color: white;
+}
+
+#add-task-tracker-btn.loading {
+    opacity: 0.8;
+    cursor: wait;
+    transform: none;
+}
+
+@keyframes catLoadingSpin {
+    0% { transform: rotate(0deg) scale(1.2); }
+    100% { transform: rotate(360deg) scale(1.2); }
+}
+
+#add-task-tracker-btn.loading .animated-cat {
+    animation: catLoadingSpin 0.4s infinite linear;
+}
+
+#add-task-tracker-btn .aui-icon {
+    margin-right: 6px;
+    color: white;
+}
+
+/* Date Picker Modal Styles */
+.task-tracker-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(9, 30, 66, 0.54);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.task-tracker-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.task-tracker-modal {
+    background: white;
+    padding: 24px;
+    border-radius: 6px;
+    box-shadow: 0 8px 16px -4px rgba(9, 30, 66, 0.25);
+    width: 320px;
+    transform: translateY(-20px);
+    transition: transform 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.task-tracker-modal-overlay.active .task-tracker-modal {
+    transform: translateY(0);
+}
+
+.task-tracker-modal h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: #172b4d;
+    font-size: 20px;
+}
+
+.task-tracker-modal label {
+    display: block;
+    margin-bottom: 8px;
+    color: #5e6c84;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.task-tracker-modal input[type="date"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #dfe1e6;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #172b4d;
+    box-sizing: border-box;
+    margin-bottom: 24px;
+    transition: border-color 0.2s;
+}
+
+.task-tracker-modal input[type="date"]:focus {
+    border-color: #4c9aff;
+    outline: none;
+}
+
+.task-tracker-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.task-tracker-modal-btn {
+    padding: 8px 16px;
+    border-radius: 3px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+.task-tracker-btn-cancel {
+    background: transparent;
+    color: #42526e;
+}
+
+.task-tracker-btn-cancel:hover {
+    background: rgba(9, 30, 66, 0.08);
+}
+
+.task-tracker-btn-submit {
+    background: #0052cc;
+    color: white;
+}
+
+.task-tracker-btn-submit:hover {
+    background: #0047b3;
+}
+
+@keyframes catBounce {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-4px) rotate(-10deg); }
+    75% { transform: translateY(-4px) rotate(10deg); }
+}
+
+.animated-cat {
+    display: inline-block;
+    animation: catBounce 1s infinite ease-in-out;
+    font-size: 16px;
+    margin-right: 6px;
+}

@@ -1,0 +1,16 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Mac
+.DS_Store
+
+# Chrome extension specific (if any, like packed extensions)
+*.pem
+*.crx
+
+# IDEs
+.idea/
+.vscode/
+*.swp

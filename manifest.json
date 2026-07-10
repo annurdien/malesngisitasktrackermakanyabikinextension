@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Jira Task Tracker",
+  "version": "1.0",
+  "description": "Adds a button to Jira issues to send them to Google Sheets Task Tracker.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://intracks.danamon.co.id/*",
+    "https://*.googleapis.com/*",
+    "https://accounts.google.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": ["https://intracks.danamon.co.id/*"],
+      "css": ["styles.css"],
+      "js": ["confetti.browser.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
