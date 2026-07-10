@@ -1,61 +1,72 @@
 # Males Ngisi Task Tracker Makanya Bikin Extension Buat Jira
 
-Intinya aja
+Extension Chrome super ringan tanpa server yang otomatis nambahin tombol "Add to Task Tracker" langsung di Jira. Tinggal klik, detail task, status, sama due date bakal otomatis masuk ke Google Sheet lo.
 
-### Step 0: Clone the Repository
-Open your terminal and clone the repository to your local machine:
-```bash
-git clone https://github.com/annurdien/malesngisitasktrackermakanyabikinextension.git
-cd malesngisitasktrackermakanyabikinextension
-```
-*(If you downloaded the ZIP file instead, just extract it and open the folder).*
-
-To get the extension working, you need to connect it to a Google Cloud Service Account so it has permission to edit your Google Sheet.
-
-### Step 1: Create a Google Cloud Project & Enable the API
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2. Create a **New Project** (e.g., "Jira Task Tracker").
-3. In the search bar at the top, search for **Google Sheets API**.
-4. Click on it and hit **Enable**.
-
-### Step 2: Create a Service Account (Your .json file)
-1. In the Google Cloud Console, navigate to **IAM & Admin > Service Accounts** (from the left sidebar).
-2. Click **+ Create Service Account** at the top.
-3. Give it a name (e.g., `sheet-automation`) and click **Create and Continue**.
-4. You don't need to assign any special roles, just click **Done**.
-5. You'll now see your new service account in the list. Click the **three dots** (Actions) next to it, and select **Manage keys**.
-6. Click **Add Key > Create new key**.
-7. Choose **JSON** and click Create.
-8. The `credentials.json` file will securely download to your computer. Keep this file safe!
-
-### Step 3: Grant the Service Account Access to Your Sheet
-The service account acts like a robot user. You need to invite it to your sheet just like a normal person.
-1. Open the downloaded `credentials.json` file in a text editor.
-2. Find the `"client_email"` line (it looks like `something@your-project.iam.gserviceaccount.com`). Copy this email address.
-3. Open the Google Sheet you want to use as your Task Tracker.
-4. Click the big **Share** button in the top right corner.
-5. Paste the service account email and give it **Editor** permissions.
-6. Click **Send**.
-
-### Step 4: Install the Extension
-1. Open Google Chrome and go to `chrome://extensions/`.
-2. Toggle **Developer mode** ON (top right corner).
-3. Click **Load unpacked** (top left).
-4. Select the `malesngisitasktrackermakanyabikinextension` folder containing this codebase.
-5. The extension will now appear in your browser!
-
-### Step 5: Configure the Extension
-1. Click the **Puzzle Piece** icon in Chrome and pin the **Jira Task Tracker** extension.
-2. Click the extension icon and select **Options**.
-3. **Credentials**: Open your `credentials.json` file, copy all the text, and paste it into the Credentials box.
-4. **Spreadsheet URL**: Paste the full URL of your Google Sheet. The options page will automatically extract the Spreadsheet ID and Sheet ID for you.
-5. Click **Save Settings**.
+## Fitur Keren
+- **Nyatu sama Jira**: Jalan lancar di tampilan issue biasa maupun tampilan list (navigator).
+- **Anti Dobel**: Bakal otomatis nyari task yang udah ada dan update datanya, jadi gak bakal ada duplikat di Sheet.
+- **Serverless**: Langsung nyambung ke Google Sheets API pake Service Account JSON.
+- **Gak Pake Ribet**: Dibikin 100% pake Vanilla JS biar kenceng dan simpel.
 
 ---
 
-## Usage
+## Tutorial Setup
 
-1. Navigate to any issue in your Jira workspace.
-2. You will see a new **Add to Task Tracker** button right next to the native Jira status buttons.
-3. Click it! A modal will pop up asking for the Due Date.
-4. Click **Confirm** and watch the confetti pop as the task is instantly synced to your Google Sheet!
+Biar extension ini jalan, lo harus nyambungin ke Google Cloud Service Account supaya dia punya akses buat ngedit Google Sheet lo.
+
+### Step 0: Clone Repository-nya
+Buka terminal dan clone repo ini ke laptop lo:
+```bash
+git clone <your-repository-url>
+cd malesngisitasktrackermakanyabikinextension
+```
+*(Kalo lo download file ZIP, tinggal di-extract aja trus buka foldernya).*
+
+### Step 1: Bikin Project di Google Cloud & Aktifin API-nya
+1. Buka [Google Cloud Console](https://console.cloud.google.com/).
+2. Bikin **Project Baru** (namain aja "Jira Task Tracker" atau terserah lo).
+3. Di kolom pencarian atas, cari **Google Sheets API**.
+4. Klik trus pencet **Enable**.
+
+### Step 2: Bikin Service Account (File .json lo)
+1. Di Google Cloud Console, liat sidebar kiri, cari **IAM & Admin > Service Accounts**.
+2. Klik **+ Create Service Account** di atas.
+3. Kasih nama (misal `sheet-automation`) trus klik **Create and Continue**.
+4. Gak usah ribet ngasih role khusus, langsung aja klik **Done**.
+5. Nah, sekarang service account baru lo bakal muncul di list. Klik **tiga titik** (Actions) di sebelahnya, pilih **Manage keys**.
+6. Klik **Add Key > Create new key**.
+7. Pilih format **JSON** trus klik Create.
+8. File `credentials.json` bakal ke-download ke laptop lo. Simpen baik-baik ya!
+
+### Step 3: Kasih Akses Service Account ke Google Sheet Lo
+Anggap aja service account ini kayak robot. Lo harus invite si robot ini ke Sheet lo layaknya temen kerja biasa.
+1. Buka file `credentials.json` yang barusan lo download pake text editor (Notepad, VSCode, dll).
+2. Cari baris yang tulisannya `"client_email"` (bentuknya kira-kira `something@your-project.iam.gserviceaccount.com`). Copy alamat email itu.
+3. Buka Google Sheet yang mau lo jadiin Task Tracker.
+4. Klik tombol **Share** warna ijo gede di pojok kanan atas.
+5. Paste email service account tadi dan pastiin role-nya jadi **Editor**.
+6. Klik **Send**.
+
+### Step 4: Install Extension di Chrome
+1. Buka Google Chrome trus ke `chrome://extensions/`.
+2. Nyalain toggle **Developer mode** di pojok kanan atas (sampe warnanya biru).
+3. Klik tombol **Load unpacked** di kiri atas.
+4. Pilih folder `malesngisitasktrackermakanyabikinextension` (folder repo ini).
+5. Voila! Extension-nya udah kepasang di browser lo.
+
+### Step 5: Setting Extension-nya
+1. Klik icon **Puzzle** di Chrome trus pin extension **Jira Task Tracker** biar gampang diakses.
+2. Klik icon extension-nya trus pilih **Options**.
+3. **Credentials**: Buka file `credentials.json` lo tadi, copy semua teksnya, trus paste ke kotak Credentials.
+4. **Spreadsheet URL**: Paste full link (URL) dari Google Sheet lo. Tenang aja, extension ini bakal otomatis nge-ekstrak Spreadsheet ID sama Sheet ID-nya.
+5. Lo juga bisa milih animasi apa yang mau muncul pas sukses nambahin task di menu *Success Animation Type*.
+6. Terakhir, klik **Save Settings**.
+
+---
+
+## Cara Pake
+
+1. Buka task/issue apa aja di Jira lo.
+2. Nanti bakal muncul tombol **Add to Task Tracker** baru di sebelah tombol-tombol status bawaan Jira.
+3. Klik aja! Bakal muncul pop-up buat masukin Due Date.
+4. Klik **Confirm** dan nikmatin animasinya pas task lo otomatis ke-sync ke Google Sheet! Gampang banget kan?
