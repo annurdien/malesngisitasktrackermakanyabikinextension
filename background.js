@@ -17,6 +17,15 @@ const CONFIG = {
 // HELPER FUNCTIONS
 // ==========================================
 
+function getColIndex(letter) {
+  if (!letter) return 1; // Default 'B' -> index 1
+  return letter.toUpperCase().charCodeAt(0) - 65;
+}
+
+function getColLetter(index) {
+  return String.fromCharCode(65 + index);
+}
+
 /**
  * Get a date formatted as YYYY-MM-DD
  * @param {Date} date - The date to format
@@ -123,12 +132,13 @@ async function fetchSheetTitle(token, spreadsheetId, sheetId) {
  * @param {string} taskDetail - The full task string containing the key (e.g. "[KEY] Title")
  * @returns {Promise<number>} The 1-indexed row number if found, or -1 if not found
  */
-async function findExistingTaskRow(token, spreadsheetId, sheetTitle, taskDetail) {
+async function findExistingTaskRow(token, spreadsheetId, sheetTitle, taskDetail, colIndex) {
   const match = taskDetail.match(/^\[(.*?)\]/);
   const taskKey = match ? match[1] : null;
   if (!taskKey) return -1;
 
-  const encodedRange = encodeURIComponent(`'${sheetTitle}'!E:E`);
+  const taskCol = getColLetter(colIndex + 3);
+  const encodedRange = encodeURIComponent(`'${sheetTitle}'!${taskCol}:${taskCol}`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodedRange}`;
   
   let response;
@@ -159,7 +169,7 @@ async function findExistingTaskRow(token, spreadsheetId, sheetTitle, taskDetail)
 /**
  * Updates an existing row in the spreadsheet
  */
-async function updateExistingTask(token, spreadsheetId, sheetTitle, rowNum, payload) {
+async function updateExistingTask(token, spreadsheetId, sheetTitle, rowNum, payload, colIndex) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`;
   let response;
   try {
@@ -172,10 +182,10 @@ async function updateExistingTask(token, spreadsheetId, sheetTitle, rowNum, payl
       body: JSON.stringify({
         valueInputOption: "USER_ENTERED",
         data: [
-          { range: `'${sheetTitle}'!B${rowNum}`, values: [[payload.status]] },
-          { range: `'${sheetTitle}'!E${rowNum}`, values: [[payload.taskDetail]] },
-          { range: `'${sheetTitle}'!G${rowNum}`, values: [[payload.cat]] },
-          { range: `'${sheetTitle}'!H${rowNum}`, values: [[payload.due]] }
+          { range: `'${sheetTitle}'!${getColLetter(colIndex)}${rowNum}`, values: [[payload.status]] },
+          { range: `'${sheetTitle}'!${getColLetter(colIndex + 3)}${rowNum}`, values: [[payload.taskDetail]] },
+          { range: `'${sheetTitle}'!${getColLetter(colIndex + 5)}${rowNum}`, values: [[payload.cat]] },
+          { range: `'${sheetTitle}'!${getColLetter(colIndex + 6)}${rowNum}`, values: [[payload.due]] }
         ]
       })
     });
@@ -192,7 +202,7 @@ async function updateExistingTask(token, spreadsheetId, sheetTitle, rowNum, payl
 /**
  * Appends a completely new row into the spreadsheet by inserting a row at index 15
  */
-async function insertNewTask(token, spreadsheetId, sheetId, payload) {
+async function insertNewTask(token, spreadsheetId, sheetId, payload, colIndex) {
   const rowData = [
     payload.status, payload.date_ent, payload.project, 
     payload.taskDetail, payload.role, payload.cat, payload.due
@@ -210,7 +220,7 @@ async function insertNewTask(token, spreadsheetId, sheetId, payload) {
         range: {
           sheetId: sheetId, 
           startRowIndex: CONFIG.insertRowIndex, endRowIndex: CONFIG.insertRowIndex + 1,
-          startColumnIndex: 1, endColumnIndex: rowData.length + 1
+          startColumnIndex: colIndex, endColumnIndex: colIndex + rowData.length
         },
         rows: [{
           values: rowData.map(val => val !== "" ? { userEnteredValue: { stringValue: String(val) } } : {})
@@ -248,8 +258,9 @@ async function insertNewTask(token, spreadsheetId, sheetId, payload) {
 /**
  * Orchestrates the task upload flow: fetch metadata -> check duplicates -> update or insert
  */
-async function processTaskUpload(accessToken, taskDetail, spreadsheetId, sheetIdStr, taskStatus, taskCategory, taskDueDate) {
+async function processTaskUpload(accessToken, taskDetail, spreadsheetId, sheetIdStr, taskStatus, taskCategory, taskDueDate, startColumnLetter) {
   const sheetId = parseInt(sheetIdStr, 10);
+  const colIndex = getColIndex(startColumnLetter);
   
   // Construct the payload
   const payload = {
@@ -265,14 +276,14 @@ async function processTaskUpload(accessToken, taskDetail, spreadsheetId, sheetId
   // 1. Resolve numeric sheetId to sheet title
   const sheetTitle = await fetchSheetTitle(accessToken, spreadsheetId, sheetId);
 
-  // 2. Check for duplicates in Column D
-  const existingRowNum = await findExistingTaskRow(accessToken, spreadsheetId, sheetTitle, payload.taskDetail);
+  // 2. Check for duplicates in the specific task detail column
+  const existingRowNum = await findExistingTaskRow(accessToken, spreadsheetId, sheetTitle, payload.taskDetail, colIndex);
 
   // 3. Execute appropriate action
   if (existingRowNum !== -1) {
-    await updateExistingTask(accessToken, spreadsheetId, sheetTitle, existingRowNum, payload);
+    await updateExistingTask(accessToken, spreadsheetId, sheetTitle, existingRowNum, payload, colIndex);
   } else {
-    await insertNewTask(accessToken, spreadsheetId, sheetId, payload);
+    await insertNewTask(accessToken, spreadsheetId, sheetId, payload, colIndex);
   }
 }
 
@@ -282,7 +293,7 @@ async function processTaskUpload(accessToken, taskDetail, spreadsheetId, sheetId
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "addTask") {
-    chrome.storage.local.get(['serviceAccountCredentials', 'spreadsheetId', 'sheetId'], async (result) => {
+    chrome.storage.local.get(['serviceAccountCredentials', 'spreadsheetId', 'sheetId', 'startColumn'], async (result) => {
       if (!result.serviceAccountCredentials || !result.spreadsheetId || !result.sheetId) {
         sendResponse({ success: false, error: 'Extension not fully configured. Please configure in options.' });
         return;
@@ -297,7 +308,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           result.sheetId, 
           request.taskStatus, 
           request.taskCategory, 
-          request.taskDueDate
+          request.taskDueDate,
+          result.startColumn || 'B'
         );
         sendResponse({ success: true });
       } catch (e) {

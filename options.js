@@ -3,6 +3,7 @@ function save_options() {
   const credentialsText = document.getElementById('credentials').value;
   const spreadsheetId = document.getElementById('spreadsheetId').value.trim();
   const sheetId = document.getElementById('sheetId').value.trim();
+  const startColumn = document.getElementById('startColumn').value;
   const successAnimationType = document.getElementById('successAnimationType').value;
 
   try {
@@ -11,6 +12,7 @@ function save_options() {
       serviceAccountCredentials: credentials,
       spreadsheetId: spreadsheetId,
       sheetId: sheetId,
+      startColumn: startColumn,
       successAnimationType: successAnimationType
     }, function() {
       // Update status to let user know options were saved.
@@ -37,6 +39,7 @@ function restore_options() {
     serviceAccountCredentials: null,
     spreadsheetId: '',
     sheetId: '',
+    startColumn: 'B',
     successAnimationType: 'image'
   }, function(items) {
     if (items.serviceAccountCredentials) {
@@ -44,6 +47,7 @@ function restore_options() {
     }
     document.getElementById('spreadsheetId').value = items.spreadsheetId;
     document.getElementById('sheetId').value = items.sheetId;
+    document.getElementById('startColumn').value = items.startColumn;
     document.getElementById('successAnimationType').value = items.successAnimationType;
   });
 }
