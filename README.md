@@ -12,7 +12,7 @@ cd malesngisitasktrackermakanyabikinextension
 
 ### Step 1: Bikin Project di Google Cloud & Aktifin API-nya
 1. Buka [Google Cloud Console](https://console.cloud.google.com/).
-2. Bikin **Project Baru** (namain aja "Jira Task Tracker" atau terserah lo).
+2. Bikin **Project Baru** (namain aja "Jira Task Tracker" atau terserah lo) atau pake default My First Project Juga boleh.
 3. Di kolom pencarian atas, cari **Google Sheets API**.
 4. Klik trus pencet **Enable**.
 
