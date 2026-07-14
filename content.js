@@ -24,23 +24,41 @@ const CONFIG = {
 // ==========================================
 
 /**
- * Extracts Jira Issue data from the DOM
+ * Helper to get the first visible element matching a selector
+ */
+function getVisibleElement(selector) {
+  const els = Array.from(document.querySelectorAll(selector));
+  return els.find(el => el.offsetParent !== null) || els[0];
+}
+
+/**
+ * Extracts Jira Issue data from the DOM and URL
  * @returns {Object|null} Extracted issue data or null if not found
  */
 function extractJiraData() {
-  const titleEl = document.querySelector(CONFIG.selectors.title);
-  const keyEl = document.querySelector(CONFIG.selectors.key);
+  // 1. Prioritize getting the key from the URL in SPA list view
+  const urlParams = new URLSearchParams(window.location.search);
+  let key = urlParams.get('selectedIssue');
+  if (!key) {
+    const match = window.location.pathname.match(/\/browse\/([A-Z0-9\-]+)/);
+    if (match) key = match[1];
+  }
 
-  if (!titleEl || !keyEl) {
+  // 2. Only select visible elements (avoids stale DOM nodes from previous tasks)
+  const keyEl = getVisibleElement(CONFIG.selectors.key);
+  if (!key && keyEl) {
+    key = keyEl.innerText.trim();
+  }
+
+  const titleEl = getVisibleElement(CONFIG.selectors.title);
+  if (!titleEl || !key) {
     return null;
   }
 
   const title = titleEl.innerText.trim();
-  const key = keyEl.innerText.trim();
-  
-  // Jira uses different elements for status depending on version/theme
-  const statusValEl = document.querySelector(CONFIG.selectors.statusId);
-  const dataIssueStatusEl = document.querySelector(CONFIG.selectors.statusAttr);
+
+  const statusValEl = getVisibleElement(CONFIG.selectors.statusId);
+  const dataIssueStatusEl = getVisibleElement(CONFIG.selectors.statusAttr);
   let rawStatus = "";
   if (statusValEl) {
     rawStatus = statusValEl.innerText.trim().toUpperCase();
@@ -48,9 +66,8 @@ function extractJiraData() {
     rawStatus = (dataIssueStatusEl.getAttribute('data-issue-status') || "").trim().toUpperCase();
   }
 
-  // Same for issue type
-  const typeValEl = document.querySelector(CONFIG.selectors.typeId);
-  const dataIssueTypeEl = document.querySelector(CONFIG.selectors.typeAttr);
+  const typeValEl = getVisibleElement(CONFIG.selectors.typeId);
+  const dataIssueTypeEl = getVisibleElement(CONFIG.selectors.typeAttr);
   let rawType = "";
   if (typeValEl) {
     rawType = typeValEl.innerText.trim().toUpperCase();
@@ -93,17 +110,17 @@ function mapJiraDataToSheet(rawStatus, rawType) {
  */
 function getMountPoint() {
   let opsbarUl = null;
-  
+
   // 1. Try to find the status transition button directly (works perfectly in List Layout)
   const transitionsBtn = document.querySelector(CONFIG.selectors.transitionsBtn);
   if (transitionsBtn) {
     opsbarUl = transitionsBtn.closest('ul');
   }
-  
+
   // 2. Fallback to standard Issue View mount points
   if (!opsbarUl) {
-    const mountPoint = document.querySelector(CONFIG.selectors.transitionsOpsbar) 
-                    || document.querySelector(CONFIG.selectors.operationsOpsbar);
+    const mountPoint = document.querySelector(CONFIG.selectors.transitionsOpsbar)
+      || document.querySelector(CONFIG.selectors.operationsOpsbar);
     if (mountPoint) {
       opsbarUl = mountPoint.parentNode;
     }
@@ -121,8 +138,19 @@ function getMountPoint() {
  * Main function to inject the "Add to Task Tracker" button
  */
 function injectButton() {
-  // Avoid duplicate buttons
-  if (document.getElementById(CONFIG.buttonId)) return;
+  const jiraData = extractJiraData();
+  if (!jiraData) return;
+
+  const existingButton = document.getElementById(CONFIG.buttonId);
+  if (existingButton) {
+    if (existingButton.dataset.taskKey !== jiraData.key) {
+      // Task changed in SPA, remove stale button container
+      existingButton.closest('li.pluggable-ops')?.remove();
+    } else {
+      // Button already exists for this task
+      return;
+    }
+  }
 
   const opsbarUl = getMountPoint();
   if (!opsbarUl) return;
@@ -132,6 +160,7 @@ function injectButton() {
 
   const a = document.createElement('a');
   a.id = CONFIG.buttonId;
+  a.dataset.taskKey = jiraData.key;
   a.className = 'aui-button toolbar-trigger issueaction-add-to-tracker';
   a.href = '#';
   a.title = 'Send this issue to Google Sheets Task Tracker';
@@ -210,7 +239,7 @@ function handleBackgroundResponse(response, buttonElement, labelElement) {
     labelElement.innerText = 'Added!';
     buttonElement.style.background = 'linear-gradient(135deg, #36B37E 0%, #00875A 100%)';
 
-    chrome.storage.local.get({ successAnimationType: 'image' }, function(items) {
+    chrome.storage.local.get({ successAnimationType: 'image' }, function (items) {
       if (items.successAnimationType === 'image') {
         const parrotContainer = document.createElement('div');
         parrotContainer.style.position = 'fixed';
@@ -232,18 +261,18 @@ function handleBackgroundResponse(response, buttonElement, labelElement) {
         parrot.src = chrome.runtime.getURL('jkw-bck.png');
         parrot.style.width = '50vmin'; // Giant image relative to screen size
         parrotContainer.appendChild(parrot);
-        
+
         const memeText = document.createElement('div');
         memeText.innerText = 'SIP';
         memeText.style.fontFamily = 'Impact, "Arial Black", sans-serif';
         memeText.style.fontSize = '120px';
         memeText.style.color = 'white';
         memeText.style.textTransform = 'uppercase';
-        memeText.style.textShadow = '3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 0 6px 0 #000, 6px 6px 10px rgba(0,0,0,0.5)'; 
+        memeText.style.textShadow = '3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 0 6px 0 #000, 6px 6px 10px rgba(0,0,0,0.5)';
         memeText.style.marginTop = '20px';
         memeText.style.letterSpacing = '5px';
         parrotContainer.appendChild(memeText);
-        
+
         document.body.appendChild(parrotContainer);
 
         const audio = new Audio(chrome.runtime.getURL('hidup-jokowi.mp3'));
@@ -293,59 +322,62 @@ function handleBackgroundResponse(response, buttonElement, labelElement) {
  * @param {Function} onSubmit - Callback function with the selected date
  */
 function showDatePickerModal(onSubmit) {
-  let overlay = document.getElementById(CONFIG.modalId);
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = CONFIG.modalId;
-    overlay.className = 'task-tracker-modal-overlay';
+  let existingOverlay = document.getElementById(CONFIG.modalId);
 
-    const modal = document.createElement('div');
-    modal.className = 'task-tracker-modal';
-
-    const title = document.createElement('h3');
-    title.innerText = 'Set Due Date';
-
-    const label = document.createElement('label');
-    label.innerText = 'When is this task due?';
-
-    const dateInput = document.createElement('input');
-    dateInput.type = 'date';
-    dateInput.id = 'task-tracker-due-date';
-    
-    // Default to +3 days
-    const defaultDate = new Date(Date.now() + CONFIG.defaultDueDays * 24 * 60 * 60 * 1000);
-    dateInput.value = defaultDate.toISOString().split('T')[0];
-
-    const actions = document.createElement('div');
-    actions.className = 'task-tracker-modal-actions';
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'task-tracker-modal-btn task-tracker-btn-cancel';
-    cancelBtn.innerText = 'Cancel';
-
-    const submitBtn = document.createElement('button');
-    submitBtn.className = 'task-tracker-modal-btn task-tracker-btn-submit';
-    submitBtn.innerText = 'Confirm';
-
-    actions.append(cancelBtn, submitBtn);
-    modal.append(title, label, dateInput, actions);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-
-    // Event listeners
-    cancelBtn.addEventListener('click', () => overlay.classList.remove('active'));
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.classList.remove('active');
-    });
-    submitBtn.addEventListener('click', () => {
-      if (!dateInput.value) {
-        alert('Please select a due date.');
-        return;
-      }
-      overlay.classList.remove('active');
-      onSubmit(dateInput.value);
-    });
+  if (existingOverlay) {
+    existingOverlay.remove();
   }
+
+  let overlay = document.createElement('div');
+  overlay.id = CONFIG.modalId;
+  overlay.className = 'task-tracker-modal-overlay';
+
+  const modal = document.createElement('div');
+  modal.className = 'task-tracker-modal';
+
+  const title = document.createElement('h3');
+  title.innerText = 'Set Due Date';
+
+  const label = document.createElement('label');
+  label.innerText = 'When is this task due?';
+
+  const dateInput = document.createElement('input');
+  dateInput.type = 'date';
+  dateInput.id = 'task-tracker-due-date';
+
+  // Default to +3 days
+  const defaultDate = new Date(Date.now() + CONFIG.defaultDueDays * 24 * 60 * 60 * 1000);
+  dateInput.value = defaultDate.toISOString().split('T')[0];
+
+  const actions = document.createElement('div');
+  actions.className = 'task-tracker-modal-actions';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'task-tracker-modal-btn task-tracker-btn-cancel';
+  cancelBtn.innerText = 'Cancel';
+
+  const submitBtn = document.createElement('button');
+  submitBtn.className = 'task-tracker-modal-btn task-tracker-btn-submit';
+  submitBtn.innerText = 'Confirm';
+
+  actions.append(cancelBtn, submitBtn);
+  modal.append(title, label, dateInput, actions);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Event listeners
+  cancelBtn.addEventListener('click', () => overlay.classList.remove('active'));
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+  submitBtn.addEventListener('click', () => {
+    if (!dateInput.value) {
+      alert('Please select a due date.');
+      return;
+    }
+    overlay.classList.remove('active');
+    onSubmit(dateInput.value);
+  });
 
   overlay.classList.add('active');
 }
@@ -368,4 +400,3 @@ const observer = new MutationObserver(() => {
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
-setTimeout(injectButton, 1000);
