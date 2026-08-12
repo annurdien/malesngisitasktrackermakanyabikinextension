@@ -164,3 +164,99 @@
     margin: 0;
     padding: 0;
 }
+
+/* Quick Transition Buttons */
+.quick-transition-btn {
+    transition: all 0.3s ease !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3) !important;
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%) !important;
+    background-size: 200% 200% !important;
+    border-radius: 4px !important;
+    padding: 0 12px !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+}
+
+.quick-transition-btn:hover {
+    box-shadow: 0 6px 16px rgba(255, 152, 0, 0.5) !important;
+    transform: translateY(-2px) !important;
+    background: linear-gradient(135deg, #F57C00 0%, #E65100 100%) !important;
+    color: white !important;
+}
+
+.quick-transition-btn.loading {
+    opacity: 0.8 !important;
+    cursor: wait !important;
+    transform: none !important;
+}
+
+/* Quick Jump Feature */
+#quick-jump-btn {
+    background: linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%) !important;
+    color: white !important;
+    border: none !important;
+    font-weight: bold;
+    border-radius: 4px;
+    height: 32px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s ease;
+}
+
+#quick-jump-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%) !important;
+}
+
+.quick-jump-targets {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.quick-jump-target-btn {
+    background: white;
+    border: 1px solid #DFE1E6;
+    color: #172B4D;
+    padding: 10px 16px;
+    border-radius: 4px;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.quick-jump-target-btn::after {
+    content: "→";
+    color: #0052CC;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform: translateX(-10px);
+}
+
+.quick-jump-target-btn:hover {
+    background: #F4F5F7;
+    border-color: #0052CC;
+    color: #0052CC;
+}
+
+.quick-jump-target-btn:hover::after {
+    opacity: 1;
+    transform: translateX(0);
+}

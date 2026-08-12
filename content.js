@@ -386,8 +386,13 @@ function showDatePickerModal(onSubmit) {
 // LIFECYCLE & MUTATION OBSERVER
 // ==========================================
 
-window.addEventListener('load', injectButton);
-injectButton(); // Initial try for dynamic loads
+window.addEventListener('load', () => {
+  injectButton();
+  injectQuickJump();
+});
+// Initial try for dynamic loads
+injectButton();
+injectQuickJump();
 
 // Simple debounce to prevent observer thrashing during heavy SPA loads
 let debounceTimeout = null;
@@ -396,7 +401,259 @@ const observer = new MutationObserver(() => {
   debounceTimeout = setTimeout(() => {
     debounceTimeout = null;
     injectButton();
+    injectQuickJump();
   }, 300); // 300ms debounce
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
+
+// ==========================================
+// QUICK JUMP (MACRO TRANSITIONS)
+// ==========================================
+
+const STATUS_WEIGHT = {
+  "NEW": 0,
+  "REVIEW TO DROP": 5,
+  "OPEN": 10,
+  "POSTPONED": 15,
+  "FIX IN PROGRESS": 20,
+  "FIXED": 30,
+  "DEPLOY TO SIT": 40,
+  "SIT PENDING TESTING": 50,
+  "SIT RE-OPEN": 45,
+  "SIT OK": 60,
+  "DEPLOY TO UAT": 70,
+  "UAT PENDING TESTING": 80,
+  "UAT RE-OPEN": 75,
+  "UAT PASSED": 90,
+  "CLOSED": 100,
+  "DROPPED": 100
+};
+
+const COMMON_TARGETS = [
+  "OPEN",
+  "FIX IN PROGRESS",
+  "FIXED",
+  "DEPLOY TO SIT",
+  "SIT PENDING TESTING",
+  "DEPLOY TO UAT",
+  "UAT PENDING TESTING",
+  "CLOSED"
+];
+
+function injectQuickJump() {
+  const jiraData = extractJiraData();
+  if (!jiraData) return;
+
+  const opsbarUl = getMountPoint();
+  if (!opsbarUl) return;
+
+  const existingBtn = document.getElementById('quick-jump-btn');
+  if (existingBtn) {
+    if (existingBtn.dataset.taskKey !== jiraData.key) {
+      existingBtn.closest('li').remove();
+    } else {
+      return;
+    }
+  }
+
+  const li = document.createElement('li');
+  li.className = 'aui-buttons pluggable-ops';
+
+  const btn = document.createElement('a');
+  btn.id = 'quick-jump-btn';
+  btn.dataset.taskKey = jiraData.key;
+  btn.className = 'aui-button quick-jump-btn';
+  btn.href = '#';
+  btn.innerHTML = `<span class="aui-icon aui-icon-small aui-iconfont-send" style="color:white; margin-right:4px;"></span>Quick Jump`;
+  
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    showQuickJumpModal(jiraData);
+  });
+  
+  li.appendChild(btn);
+  opsbarUl.appendChild(li);
+}
+
+function showQuickJumpModal(jiraData) {
+  let existingOverlay = document.getElementById('quick-jump-modal-overlay');
+  if (existingOverlay) existingOverlay.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'quick-jump-modal-overlay';
+  overlay.className = 'task-tracker-modal-overlay';
+
+  const modal = document.createElement('div');
+  modal.className = 'task-tracker-modal';
+  modal.style.width = '360px';
+
+  const title = document.createElement('h3');
+  title.innerText = '🚀 Quick Jump';
+
+  const desc = document.createElement('p');
+  desc.innerText = 'Select a target status. We will automatically transition the issue through the workflow for you.';
+  desc.style.color = '#5e6c84';
+  desc.style.fontSize = '13px';
+  desc.style.marginBottom = '16px';
+
+  const targetsContainer = document.createElement('div');
+  targetsContainer.className = 'quick-jump-targets';
+
+  COMMON_TARGETS.forEach(target => {
+    if (target.toUpperCase() === jiraData.rawStatus) return; // Skip current
+    
+    const btn = document.createElement('button');
+    btn.className = 'quick-jump-target-btn';
+    btn.innerText = target;
+    btn.addEventListener('click', () => {
+      startMacroTransition(jiraData, target, modal, overlay);
+    });
+    targetsContainer.appendChild(btn);
+  });
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'task-tracker-modal-btn task-tracker-btn-cancel';
+  closeBtn.innerText = 'Cancel';
+  closeBtn.style.width = '100%';
+  closeBtn.style.marginTop = '16px';
+  closeBtn.addEventListener('click', () => overlay.classList.remove('active'));
+
+  modal.append(title, desc, targetsContainer, closeBtn);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Trigger reflow for animation
+  void overlay.offsetWidth;
+  overlay.classList.add('active');
+}
+
+async function startMacroTransition(jiraData, targetStatus, modalElement, overlayElement) {
+  // Update UI to loading state
+  modalElement.innerHTML = '';
+  
+  const title = document.createElement('h3');
+  title.innerText = '🚀 Jumping...';
+  title.style.textAlign = 'center';
+  
+  const progressText = document.createElement('p');
+  progressText.innerText = `Target: ${targetStatus}`;
+  progressText.style.textAlign = 'center';
+  progressText.style.color = '#0052cc';
+  progressText.style.fontWeight = 'bold';
+  progressText.style.margin = '16px 0';
+
+  const logs = document.createElement('div');
+  logs.style.fontSize = '12px';
+  logs.style.color = '#5e6c84';
+  logs.style.background = '#f4f5f7';
+  logs.style.padding = '8px';
+  logs.style.borderRadius = '4px';
+  logs.style.maxHeight = '150px';
+  logs.style.overflowY = 'auto';
+
+  modalElement.append(title, progressText, logs);
+
+  const addLog = (msg) => {
+    const el = document.createElement('div');
+    el.innerText = `• ${msg}`;
+    logs.appendChild(el);
+    logs.scrollTop = logs.scrollHeight;
+  };
+
+  const issueKey = jiraData.key;
+  const targetWeight = STATUS_WEIGHT[targetStatus.toUpperCase()];
+
+  if (targetWeight === undefined) {
+    addLog(`Error: Target status weight unknown.`);
+    setTimeout(() => overlayElement.classList.remove('active'), 3000);
+    return;
+  }
+
+  addLog(`Starting macro transition for ${issueKey}`);
+
+  let currentStatus = jiraData.rawStatus;
+  let safetyCounter = 0;
+
+  while (currentStatus !== targetStatus.toUpperCase() && safetyCounter < 10) {
+    safetyCounter++;
+    
+    // Fetch current available transitions
+    let transitionsData;
+    try {
+      const res = await fetch(`/rest/api/2/issue/${issueKey}/transitions`);
+      if (!res.ok) throw new Error('API Error');
+      transitionsData = await res.json();
+    } catch(e) {
+      addLog(`Failed to fetch transitions.`);
+      break;
+    }
+
+    const available = transitionsData.transitions;
+    if (!available || available.length === 0) {
+      addLog(`No transitions available from ${currentStatus}. Stuck.`);
+      break;
+    }
+
+    // Find the best transition using greedy algorithm
+    let bestTransition = null;
+    let minDistance = Infinity;
+
+    available.forEach(t => {
+      const toName = t.to.name.toUpperCase();
+      const weight = STATUS_WEIGHT[toName];
+      if (weight !== undefined) {
+        const distance = Math.abs(targetWeight - weight);
+        if (distance < minDistance) {
+          minDistance = distance;
+          bestTransition = t;
+        }
+      }
+    });
+
+    if (!bestTransition) {
+      addLog(`Cannot find a known path from ${currentStatus}. Stuck.`);
+      break;
+    }
+
+    const nextStatus = bestTransition.to.name.toUpperCase();
+    
+    // Check if we are stuck in a loop or not making progress
+    // e.g., if distance doesn't strictly decrease, but for some complex paths it might temporarily increase
+    // but the greedy approach prevents loops since it strictly minimizes distance to target
+    
+    addLog(`Executing: ${bestTransition.name} -> ${nextStatus}`);
+    
+    // POST transition
+    try {
+       const postRes = await fetch(`/rest/api/2/issue/${issueKey}/transitions`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ transition: { id: bestTransition.id } })
+       });
+       
+       if (!postRes.ok) {
+         addLog(`Transition failed!`);
+         break;
+       }
+       
+       currentStatus = nextStatus;
+       if (currentStatus === targetStatus.toUpperCase()) {
+         addLog(`🎉 Successfully reached ${targetStatus}!`);
+       }
+    } catch(err) {
+       addLog(`Error during transition.`);
+       break;
+    }
+  }
+
+  if (safetyCounter >= 10) {
+    addLog(`Stopped due to too many steps.`);
+  }
+
+  addLog(`Reloading page...`);
+  setTimeout(() => {
+    location.reload();
+  }, 1000);
+}
+
